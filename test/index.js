@@ -2,16 +2,11 @@
 
 var chai = require('chai');
 var should = chai.should();
-var expect = chai.expect;
 var assert = require('assert');
+var expect = chai.expect;
 
-var bitcore = require('bitcore');
-var bloom = require('../');
-var Filter = bloom.Filter;
-var MurmurHash3 = bloom.MurmurHash3;
-var Messages = bloom.Messages;
-
-var fixtures = require('./data/index.json');
+var Filter = require('../');
+var MurmurHash3 = Filter.MurmurHash3;
 
 // convert a hex string to a bytes buffer
 function ParseHex(str) {
@@ -70,6 +65,24 @@ describe('Bloom', function() {
       should.exist(filter.nHashFuncs);
     });
 
+    it('error if missing vData', function(){
+      expect(function(){
+        var a = new Filter({});
+      }).to.throw(Error);
+    });
+
+    it('error if missing nHashFuncs', function(){
+      expect(function(){
+        var a = new Filter({vData: [121, 12, 200]});
+      }).to.throw(Error);
+    });
+
+    it('error if missing object', function(){
+      expect(function(){
+        var a = new Filter('unrecognized');
+      }).to.throw(Error);
+    });
+
     describe('correctly calculate size of filter and number of hash functions', function() {
       // elements, fprate, expected length, expected funcs
       // calculated with: https://github.com/petertodd/python-bitcoinlib/blob/master/bitcoin/bloom.py
@@ -102,7 +115,7 @@ describe('Bloom', function() {
       assert(filter.contains(d));
     });
 
-    it('correctly serialize to a buffer', function() {
+    it('correctly serialize to an object', function() {
 
       var filter = Filter.create(3, 0.01, 0, Filter.BLOOM_UPDATE_ALL);
 
@@ -118,14 +131,20 @@ describe('Bloom', function() {
       filter.insert(ParseHex('b9300670b4c5366e95b2699e8b18bc75e5f729c5'));
       assert(filter.contains(ParseHex('b9300670b4c5366e95b2699e8b18bc75e5f729c5')));
 
-      var actual = filter.toBuffer();
-      var expected = new Buffer('03614e9b050000000000000001', 'hex');
+      var actual = filter.toObject();
+
+      var expected = {
+        vData: [ 97, 78, 155 ],
+        nHashFuncs: 5,
+        nTweak: 0,
+        nFlags: 1
+      };
 
       actual.should.deep.equal(expected);
 
     });
 
-    it('correctly serialize to a buffer with tweak', function() {
+    it('correctly serialize to an object with tweak', function() {
 
       var filter = Filter.create(3, 0.01, 2147483649, Filter.BLOOM_UPDATE_ALL);
 
@@ -141,121 +160,45 @@ describe('Bloom', function() {
       filter.insert(ParseHex('b9300670b4c5366e95b2699e8b18bc75e5f729c5'));
       assert(filter.contains(ParseHex('b9300670b4c5366e95b2699e8b18bc75e5f729c5')));
 
-      var actual = filter.toBuffer();
-      var expected = new Buffer('03ce4299050000000100008001', 'hex');
+      var expected = {
+        vData: [ 206, 66, 153 ],
+        nHashFuncs: 5,
+        nTweak: 2147483649,
+        nFlags: 1
+      };
+
+      var actual = filter.toObject();
       actual.should.deep.equal(expected);
 
     });
 
     it('correctly serialize filter with public keys added', function() {
 
-      var privateKey = bitcore.PrivateKey.fromWIF('5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C');
-      var publicKey = privateKey.toPublicKey();
-
       var filter = Filter.create(2, 0.001, 0, Filter.BLOOM_UPDATE_ALL);
-      filter.insert(publicKey.toBuffer());
-      filter.insert(bitcore.crypto.Hash.sha256ripemd160(publicKey.toBuffer()));
 
-      var expectedFilter = Filter.fromBuffer(ParseHex('038fc16b080000000000000001'));
+      // WIF: 5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C
+      filter.insert(new Buffer('045b81f0017e2091e2edcd5eecf10d5bdd120a5514cb3ee65b8447ec18bfc4575c6d5bf415e54e03b1067934a0f0ba76b01c6b9ab227142ee1d543764b69d901e0', 'hex'));
+      filter.insert(new Buffer('477abbacd4113f2e6b100526222eedd953c26a64', 'hex'));
 
-      filter.toBuffer().should.deep.equal(expectedFilter.toBuffer());
+      var expectedFilter = new Filter({
+        vData: [ 143, 193, 107 ],
+        nHashFuncs: 8,
+        nTweak: 0,
+        nFlags: 1
+      });
+
+      filter.toObject().should.deep.equal(expectedFilter.toObject());
 
     });
 
 
-    describe('correctly find relevant transaction', function() {
+    it('correctly deserialize', function() {
 
-      var tx = new bitcore.Transaction(ParseHex(fixtures.utxo.data));
-      var spendingTx = new bitcore.Transaction(ParseHex(fixtures.spendtx.data));
-
-      it('tx hash', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        filter.insert(ParseHex('b4749f017444b051c44dfd2720e88f314ff94f3dd6d56d40ef65854fcd7fff6b'));
-        assert(filter.isRelevantAndUpdate(tx));
+      var filter = new Filter({
+        vData: [ 97, 78, 155 ],
+        nHashFuncs: 5,
+        nTweak: 0, nFlags: 1
       });
-
-      it('byte-reversed tx hash', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        filter.insert(ParseHex('6bff7fcd4f8565ef406dd5d63d4ff94f318fe82027fd4dc451b04474019f74b4'));
-        assert(filter.isRelevantAndUpdate(tx));
-      });
-
-      it('input signature', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        filter.insert(ParseHex('30450220070aca44506c5cef3a16ed519d7c3c39f8aab192c4e1c90d065f37b8a4af6141022100a8e160b856c2d43d27d8fba71e5aef6405b8643ac4cb7cb3c462aced7f14711a01'));
-        assert(filter.isRelevantAndUpdate(tx));
-      });
-
-      xit('input pubkey', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        // input pubkey
-        filter.insert(ParseHex('046d11fee51b0e60666d5049a9101a72741df480b96ee26488a4d3466b95c9a40ac5eeef87e10a5cd336c19a84565f80fa6c547957b7700ff4dfbdefe76036c339'));
-        assert(filter.isRelevantAndUpdate(tx));
-      });
-
-      it('add output to filter', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        // output address
-        filter.insert(ParseHex('04943fdd508053c75000106d3bc6e2754dbcff19'));
-        assert(filter.isRelevantAndUpdate(tx));
-        assert(filter.isRelevantAndUpdate(spendingTx));
-      });
-
-      it('output address', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        // output address
-        filter.insert(ParseHex('a266436d2965547608b9e15d9032a7b9d64fa431'));
-        assert(filter.isRelevantAndUpdate(tx));
-      });
-
-      it('outpoint', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        // coutpoint
-        filter.insert(ParseHex('90c122d70786e899529d71dbeba91ba216982fb6ba58f3bdaab65e73b7e9260b'));
-        assert(filter.isRelevantAndUpdate(tx));
-      });
-
-      it('manually serialized outpoint', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        var data = new bitcore.encoding.BufferReader(
-          ParseHex('90c122d70786e899529d71dbeba91ba216982fb6ba58f3bdaab65e73b7e9260b')
-        ).readReverse();
-        filter.insert(data);
-        assert(filter.isRelevantAndUpdate(tx));
-      });
-
-      it('random tx hash', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        filter.insert(ParseHex('00000009e784f32f62ef849763d4f45b98e07ba658647343b915ff832b110436'));
-        assert(!filter.isRelevantAndUpdate(tx));
-      });
-
-      it('random address', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        // random address
-        filter.insert(ParseHex('0000006d2965547608b9e15d9032a7b9d64fa431'));
-        assert(!filter.isRelevantAndUpdate(tx));
-      });
-
-      xit('nonrelevant outpoint', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        //todo: outpoint define
-        filter.insert(ParseHex('90c122d70786e899529d71dbeba91ba216982fb6ba58f3bdaab65e73b7e9260b'));
-        assert(!filter.isRelevantAndUpdate(tx));
-      });
-
-      it('nonrelevant outpoint of output', function() {
-        var filter = Filter.create(10, 0.000001, 0, Filter.BLOOM_UPDATE_ALL);
-        filter.insert(ParseHex('000000d70786e899529d71dbeba91ba216982fb6ba58f3bdaab65e73b7e9260b'));
-        assert(!filter.isRelevantAndUpdate(tx));
-      });
-
-    });
-
-    it('correctly deserialize a buffer', function() {
-
-      var buffer = new Buffer('03614e9b050000000000000001', 'hex');
-      var filter = Filter.fromBuffer(buffer);
 
       assert(filter.contains(ParseHex('99108ad8ed9bb6274d3980bab5a85c048f0950c8')));
       assert(!filter.contains(ParseHex('19108ad8ed9bb6274d3980bab5a85c048f0950c8')));
@@ -272,17 +215,20 @@ describe('Bloom', function() {
       assert(!filter.contains(a));
     });
 
-  });
+    it('use the max size', function() {
+      var filter = Filter.create(900000000000000000000000000000000000, 0.01);
+      filter.vData.length.should.equal(Filter.MAX_BLOOM_FILTER_SIZE * 8);
+    });
 
-  describe('Messages', function() {
+    it('use the max number of hash funcs', function() {
+      var filter = Filter.create(10, 0.0000000000000001);
+      filter.nHashFuncs.should.equal(Filter.MAX_HASH_FUNCS);
+    });
 
-    it('construct "filterload" message', function() {
-      var filter = Filter.create(10, 0.01);
+    it('display in the console', function() {
+      var filter = Filter.create(3, 0.01);
       filter.insert(a);
-      var message = new Messages.FilterLoad(filter);
-      should.exist(message.filter);
-      expect(message.filter).to.be.an.instanceof(Filter);
-      message.command.should.equal('filterload');
+      filter.inspect().should.equal('<BloomFilter:1,0,152 nHashFuncs:5 nTweak:0 nFlags:0>');
     });
 
   });
