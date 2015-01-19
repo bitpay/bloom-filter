@@ -1,5 +1,4 @@
-bloom-filter
-========
+# bloom-filter
 
 A bloom filter suitable for use in Bitcoin Connection Bloom Filtering as part of [BIP37](https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki).
 
