@@ -1,5 +1,5 @@
 {
-  "name": "bitbloom",
+  "name": "bloom-filter",
   "main": "lib/index.js",
   "version": "0.1.0",
   "scripts": {

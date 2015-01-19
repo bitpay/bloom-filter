@@ -1,4 +1,4 @@
-bitbloom
+bloom-filter
 ========
 
 A bloom filter suitable for use in Bitcoin Connection Bloom Filtering as part of [BIP37](https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki).
@@ -6,12 +6,12 @@ A bloom filter suitable for use in Bitcoin Connection Bloom Filtering as part of
 ## Get Started
 
 ```bash
-npm install bitbloom
+npm install bloom-filter
 ```
 
 ```javascript
 
-var BloomFilter = require('bitbloom');
+var BloomFilter = require('bloom-filter');
 
 // convenient method to initialize the filter
 var numberOfElements = 3;
@@ -47,6 +47,6 @@ var filter = new BloomFilter({
 ```
 ## License
 
-Code released under [the MIT license](https://github.com/bitpay/bitbloom/blob/master/LICENSE).
+Code released under [the MIT license](https://github.com/bitpay/bloom-filter/blob/master/LICENSE).
 
 Copyright 2015 BitPay, Inc.
