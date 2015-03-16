@@ -1,7 +1,7 @@
 {
   "name": "bloom-filter",
   "main": "lib/index.js",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "scripts": {
     "test": "node_modules/.bin/gulp test",
     "coverage": "node_modules/.bin/gulp coverage"
