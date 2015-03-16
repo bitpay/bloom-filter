@@ -68,13 +68,25 @@ describe('Bloom', function() {
     it('error if missing vData', function(){
       expect(function(){
         var a = new Filter({});
-      }).to.throw(Error);
+      }).to.throw('Data object should include filter data "vData"');
+    });
+
+    it('error if vData exceeds max', function(){
+      expect(function(){
+        var a = new Filter({vData: Array(10000000)});
+      }).to.throw('"vData" exceeded');
     });
 
     it('error if missing nHashFuncs', function(){
       expect(function(){
         var a = new Filter({vData: [121, 12, 200]});
-      }).to.throw(Error);
+      }).to.throw('Data object should include number of hash functions');
+    });
+
+    it('error if nHashFuncs exceeds max', function(){
+      expect(function(){
+        var a = new Filter({vData: [121, 12, 200], nHashFuncs: 51});
+      }).to.throw('"nHashFuncs" exceeded max size');
     });
 
     it('error if missing object', function(){
