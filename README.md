@@ -44,6 +44,30 @@ var filter = new BloomFilter({
 
 
 ```
+## Browser
+To build a browser version you can run:
+
+```bash
+cd /path/to/bloom-filter
+browserify --require ./lib/index.js:bloom-filter -o bloom-filter.js
+```
+
+```html
+<!doctype html>
+<html lang=en-us>
+  <head>
+    <meta charset=utf-8>
+    <title>Bloom Filter</title>
+    <script src="bloom-filter.js"></script>
+    <script>
+      var BloomFilter = require('bloom-filter');
+      console.log(BloomFilter);
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
+```
 ## License
 
 Code released under [the MIT license](https://github.com/bitpay/bloom-filter/blob/master/LICENSE).
