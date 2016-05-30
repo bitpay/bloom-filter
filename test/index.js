@@ -71,12 +71,6 @@ describe('Bloom', function() {
       }).to.throw('Data object should include filter data "vData"');
     });
 
-    it('error if vData exceeds max', function(){
-      expect(function(){
-        var a = new Filter({vData: Array(10000000)});
-      }).to.throw('"vData" exceeded');
-    });
-
     it('error if missing nHashFuncs', function(){
       expect(function(){
         var a = new Filter({vData: [121, 12, 200]});
