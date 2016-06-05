@@ -140,7 +140,7 @@ describe('Bloom', function() {
       var actual = filter.toObject();
 
       var expected = {
-        vData: new Uint8Array([ 97, 78, 155 ]),
+        vData: new Buffer([ 97, 78, 155 ]),
         nHashFuncs: 5,
         nTweak: 0,
         nFlags: 1
@@ -167,7 +167,7 @@ describe('Bloom', function() {
       assert(filter.contains(ParseHex('b9300670b4c5366e95b2699e8b18bc75e5f729c5')));
 
       var expected = {
-        vData: new Uint8Array([ 206, 66, 153 ]),
+        vData: new Buffer([ 206, 66, 153 ]),
         nHashFuncs: 5,
         nTweak: 2147483649,
         nFlags: 1
