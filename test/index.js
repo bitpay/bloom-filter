@@ -15,7 +15,7 @@ function ParseHex(str) {
     result.push(parseInt(str.substring(0, 2), 16));
     str = str.substring(2, str.length);
   }
-  var buf = new Buffer(result, 16);
+  var buf = new Buffer(result);
   return buf;
 }
 
