@@ -15,7 +15,7 @@ function ParseHex(str) {
     result.push(parseInt(str.substring(0, 2), 16));
     str = str.substring(2, str.length);
   }
-  var buf = new Buffer(result, 16);
+  var buf = new Buffer(result);
   return buf;
 }
 
@@ -69,12 +69,6 @@ describe('Bloom', function() {
       expect(function(){
         var a = new Filter({});
       }).to.throw('Data object should include filter data "vData"');
-    });
-
-    it('error if vData exceeds max', function(){
-      expect(function(){
-        var a = new Filter({vData: Array(10000000)});
-      }).to.throw('"vData" exceeded');
     });
 
     it('error if missing nHashFuncs', function(){
@@ -146,7 +140,7 @@ describe('Bloom', function() {
       var actual = filter.toObject();
 
       var expected = {
-        vData: [ 97, 78, 155 ],
+        vData: new Buffer([ 97, 78, 155 ]),
         nHashFuncs: 5,
         nTweak: 0,
         nFlags: 1
@@ -173,7 +167,7 @@ describe('Bloom', function() {
       assert(filter.contains(ParseHex('b9300670b4c5366e95b2699e8b18bc75e5f729c5')));
 
       var expected = {
-        vData: [ 206, 66, 153 ],
+        vData: new Buffer([ 206, 66, 153 ]),
         nHashFuncs: 5,
         nTweak: 2147483649,
         nFlags: 1
@@ -225,11 +219,6 @@ describe('Bloom', function() {
       assert(filter.contains(a));
       filter.clear();
       assert(!filter.contains(a));
-    });
-
-    it('use the max size', function() {
-      var filter = Filter.create(900000000000000000000000000000000000, 0.01);
-      filter.vData.length.should.equal(Filter.MAX_BLOOM_FILTER_SIZE * 8);
     });
 
     it('use the max number of hash funcs', function() {
