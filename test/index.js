@@ -221,10 +221,6 @@ describe('Bloom', function() {
       assert(!filter.contains(a));
     });
 
-    it('use the max size', function() {
-      var filter = Filter.create(100000000, 0.01);
-    });
-
     it('use the max number of hash funcs', function() {
       var filter = Filter.create(10, 0.0000000000000001);
       filter.nHashFuncs.should.equal(Filter.MAX_HASH_FUNCS);
