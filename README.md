@@ -15,7 +15,7 @@ var BloomFilter = require('bloom-filter');
 // convenient method to initialize the filter
 var numberOfElements = 3;
 var falsePositiveRate = 0.01;
-var filter = BloomFilter.create(numberofElements, falsePositiveRate);
+var filter = BloomFilter.create(numberOfElements, falsePositiveRate);
 
 // elements
 var a = new Buffer('99108ad8ed9bb6274d3980bab5a85c048f0950c8', 'hex');
@@ -37,7 +37,7 @@ var filter = new BloomFilter(serialized);
 // initialize directly
 var filter = new BloomFilter({
   vData: [], // the data of the filter
-  nHashFucs: 3, // the number of hash functions to use
+  nHashFuncs: 3, // the number of hash functions to use
   nTweak: 2147483649, // the seed used for the hash fuctions
   nFlags: 0 // flags used to update the filter when matched
 });
